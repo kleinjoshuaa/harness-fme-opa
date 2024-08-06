@@ -1,0 +1,33 @@
+inputSet:
+  pipeline:
+    identifier: ValidateFlagRulesOPA
+    stages:
+      - stage:
+          identifier: GrabFlagData
+          type: Custom
+          spec:
+            execution:
+              steps:
+                - stepGroup:
+                    identifier: GetFlagNames
+                    steps:
+                      - step:
+                          identifier: ValidateFlagNames
+                          type: Run
+                          spec:
+                            envVariables:
+                              SPLIT_API_KEY: <+secrets.getValue("splitApiKey")>
+                              SPLIT_WORKSPACE_ID: 4baf0690-6d25-11e9-8497-12a5cc2af8fe
+                      - step:
+                          identifier: ValidateFlagDefinitions
+                          type: Run
+                          spec:
+                            envVariables:
+                              SPLIT_WORKSPACE_ID: 4baf0690-6d25-11e9-8497-12a5cc2af8fe
+                              PROD_ENVIRONMENT_ID: 4bc2b5a0-6d25-11e9-8497-12a5cc2af8fe
+                              STG_ENVIRONMENT_ID: 4bb12970-6d25-11e9-8497-12a5cc2af8fe
+                              SPLIT_API_KEY: <+secrets.getValue("splitApiKey")>
+  name: Test Input Set
+  identifier: Test_Input_Set
+  orgIdentifier: default
+  projectIdentifier: default_project
