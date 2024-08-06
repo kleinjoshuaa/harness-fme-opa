@@ -95,7 +95,7 @@ pipeline:
                             API_KEY = os.getenv('SPLIT_API_KEY')
                             WORKSPACE_ID = os.getenv('SPLIT_WORKSPACE_ID')
                             PROD_ENV = os.getenv('PROD_ENVIRONMENT_ID')
-                            STG_ENV = os.getenv('STAGE_ENVIRONMENT_ID')
+                            STG_ENV = os.getenv('STG_ENVIRONMENT_ID')
                             # Check if API key and Workspace ID are provided
                             if not API_KEY or not WORKSPACE_ID:
                                 raise ValueError("API key and Workspace ID must be set as environment variables.")
