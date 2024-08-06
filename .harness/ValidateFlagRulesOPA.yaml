@@ -23,7 +23,7 @@ pipeline:
                         identifier: Run_1
                         spec:
                           connectorRef: account.harnessImage
-                          image: python
+                          image: python:latest
                           shell: Python
                           command: print("hello")
                   stepGroupInfra:
