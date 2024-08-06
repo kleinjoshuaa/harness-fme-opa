@@ -26,7 +26,7 @@ pipeline:
                           image: python:latest
                           shell: Python
                           command: print("hello")
-                          privileged: true
+                          privileged: false
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
