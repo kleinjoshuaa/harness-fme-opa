@@ -6,7 +6,7 @@ pipeline:
   tags: {}
   stages:
     - stage:
-        name: GrabFlagData
+        name: ValidateFlags
         identifier: GrabFlagData
         description: ""
         type: Custom
@@ -14,19 +14,134 @@ pipeline:
           execution:
             steps:
               - stepGroup:
-                  name: GetFlagNames
+                  name: ValidateFlags
                   identifier: GetFlagNames
                   steps:
                     - step:
                         type: Run
-                        name: Run_1
-                        identifier: Run_1
+                        name: ValidateFlagNames
+                        identifier: ValidateFlagNames
                         spec:
                           connectorRef: account.harnessImage
                           image: python:latest
                           shell: Python
-                          command: print("hello")
+                          command: |-
+                            import json
+                            import urllib.request
+                            import os
+
+                            # Read API key and Workspace ID from environment variables
+                            API_KEY = os.getenv('SPLIT_API_KEY')
+                            WORKSPACE_ID = os.getenv('SPLIT_WORKSPACE_ID')
+
+                            # Check if API key and Workspace ID are provided
+                            if not API_KEY or not WORKSPACE_ID:
+                                raise ValueError("API key and Workspace ID must be set as environment variables.")
+
+                            # Base URL for the API endpoint
+                            BASE_URL = f"https://api.split.io/internal/api/v2/splits/ws/{WORKSPACE_ID}"
+
+                            def get_feature_flags():
+                                headers = {
+                                    'Authorization': f'Bearer {API_KEY}',
+                                    'Accept': 'application/json'
+                                }
+                                all_flags = []
+                                offset = 0
+                                limit = 20
+
+                                while True:
+                                    url = f"{BASE_URL}?limit={limit}&offset={offset}"
+
+                                    request = urllib.request.Request(url, headers=headers)
+                                    with urllib.request.urlopen(request) as response:
+                                        data = json.loads(response.read().decode())
+
+                                    # Extract feature flag names
+                                    all_flags.extend(data['objects'])
+
+                                    # Check if we have fetched all records
+                                    total_count = data['totalCount']
+                                    offset += limit
+                                    if offset >= total_count:
+                                        break
+
+                                # Set environment variable with combined JSON
+                                os.environ['FLAG_NAME_JSON'] = json.dumps(all_flags)
+                                print("Environment variable FLAG_NAME_JSON set with combined JSON of all feature flags.")
+
+                            # Call the function
+                            get_feature_flags()
                           privileged: false
+                          envVariables:
+                            SPLIT_API_KEY: <+input>
+                            SPLIT_WORKSPACE_ID: <+input>
+                          outputVariables:
+                            - name: FLAG_NAME_JSON
+                    - step:
+                        type: Run
+                        name: ValidateFlagDefinitions
+                        identifier: ValidateFlagDefinitions
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: python:latest
+                          shell: Python
+                          command: |-
+                            import json
+                            import urllib.request
+                            import os
+
+                            # Read API key and Workspace ID from environment variables
+                            API_KEY = os.getenv('SPLIT_API_KEY')
+                            WORKSPACE_ID = os.getenv('SPLIT_WORKSPACE_ID')
+                            PROD_ENV = os.getenv('PROD_ENVIRONMENT_ID')
+                            STG_ENV = os.getenv('STAGE_ENVIRONMENT_ID')
+                            # Check if API key and Workspace ID are provided
+                            if not API_KEY or not WORKSPACE_ID:
+                                raise ValueError("API key and Workspace ID must be set as environment variables.")
+
+                            # Base URL for the API endpoint
+                            BASE_URL = f"https://api.split.io/internal/api/v2/splits/ws/{WORKSPACE_ID}/environments/"
+
+                            def get_feature_flags(envId, outputVar):
+                                headers = {
+                                    'Authorization': f'Bearer {API_KEY}',
+                                    'Accept': 'application/json'
+                                }
+                                all_flags = []
+                                offset = 0
+                                limit = 20
+
+                                while True:
+                                    url = f"{BASE_URL}?limit={limit}&offset={offset}"
+
+                                    request = urllib.request.Request(url, headers=headers)
+                                    with urllib.request.urlopen(request) as response:
+                                        data = json.loads(response.read().decode())
+
+                                    # Extract feature flag names
+                                    all_flags.extend(data['objects'])
+
+                                    # Check if we have fetched all records
+                                    total_count = data['totalCount']
+                                    offset += limit
+                                    if offset >= total_count:
+                                        break
+
+                                # Set environment variable with combined JSON
+                                os.environ[outputVar] = json.dumps(all_flags)
+                                print("Environment variable "+outputVar+" set with combined JSON of all feature flags.")
+
+                            # Call the function
+                            get_feature_flags(PROD_ENV, "STAGE_FLAG_DEFINITION_JSON")
+                            get_feature_flags(STG_ENV, "PROD_FLAG_DEFINITION_JSON")
+                          envVariables:
+                            SPLIT_WORKSPACE_ID: <+input>
+                            PROD_ENVIRONMENT_ID: <+input>
+                            STG_ENVIRONMENT_ID: <+input>
+                          outputVariables:
+                            - name: PROD_FLAG_DEFINITION_JSON
+                            - name: STAGE_FLAG_DEFINITION_JSON
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
