@@ -31,6 +31,9 @@ pipeline:
                     spec:
                       connectorRef: harnessk8sconnector
                       automountServiceAccountToken: false
+                      containerSecurityContext:
+                        runAsNonRoot: true
+                        readOnlyRootFilesystem: true
             rollbackSteps: []
           serviceDependencies: []
         tags: {}
