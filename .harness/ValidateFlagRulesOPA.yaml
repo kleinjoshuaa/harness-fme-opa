@@ -135,6 +135,7 @@ pipeline:
                             # Call the function
                             get_feature_flags(PROD_ENV, "STAGE_FLAG_DEFINITION_JSON")
                             get_feature_flags(STG_ENV, "PROD_FLAG_DEFINITION_JSON")
+                          privileged: false
                           envVariables:
                             SPLIT_WORKSPACE_ID: <+input>
                             PROD_ENVIRONMENT_ID: <+input>
