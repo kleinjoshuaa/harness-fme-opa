@@ -1,0 +1,36 @@
+pipeline:
+  name: Validate-Flag-Rules-OPA
+  identifier: ValidateFlagRulesOPA
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: GrabFlagData
+        identifier: GrabFlagData
+        description: ""
+        type: Custom
+        spec:
+          execution:
+            steps:
+              - stepGroup:
+                  name: GetFlagNames
+                  identifier: GetFlagNames
+                  steps:
+                    - step:
+                        type: Run
+                        name: Run_1
+                        identifier: Run_1
+                        spec:
+                          connectorRef: account.harnessImage
+                          image: python
+                          shell: Python
+                          command: print("hello")
+                  stepGroupInfra:
+                    type: KubernetesDirect
+                    spec:
+                      connectorRef: harnessk8sconnector
+                      automountServiceAccountToken: false
+            rollbackSteps: []
+          serviceDependencies: []
+        tags: {}
