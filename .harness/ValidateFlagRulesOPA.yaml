@@ -32,6 +32,7 @@ pipeline:
                       connectorRef: harnessk8sconnector
                       automountServiceAccountToken: false
                       containerSecurityContext:
+                        allowPrivilegeEscalation: false
                         runAsNonRoot: true
                         readOnlyRootFilesystem: true
             rollbackSteps: []
