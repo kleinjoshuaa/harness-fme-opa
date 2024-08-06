@@ -139,6 +139,7 @@ pipeline:
                             SPLIT_WORKSPACE_ID: <+input>
                             PROD_ENVIRONMENT_ID: <+input>
                             STG_ENVIRONMENT_ID: <+input>
+                            SPLIT_API_KEY: <+input>
                           outputVariables:
                             - name: PROD_FLAG_DEFINITION_JSON
                             - name: STAGE_FLAG_DEFINITION_JSON
