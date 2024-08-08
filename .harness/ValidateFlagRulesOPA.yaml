@@ -1,7 +1,7 @@
 pipeline:
-  name: Validate-Flag-Rules-OPA
-  identifier: ValidateFlagRulesOPA
-  projectIdentifier: default_project
+  name: Flag-OPA-Rules
+  identifier: FlagOPARules
+  projectIdentifier: FlagOPARules
   orgIdentifier: default
   tags: {}
   stages:
@@ -14,15 +14,15 @@ pipeline:
           execution:
             steps:
               - stepGroup:
-                  name: ValidateFlags
-                  identifier: GetFlagNames
+                  name: GetFlagData
+                  identifier: GetFlagData
                   steps:
                     - step:
                         type: Run
-                        name: ValidateMetaFlags
-                        identifier: ValidateFlagNames
+                        name: GetMetaFlags
+                        identifier: GetMetaFlags
                         spec:
-                          connectorRef: account.harnessImage
+                          connectorRef: account.james_dockerhub
                           image: python:latest
                           shell: Python
                           command: |-
@@ -67,8 +67,8 @@ pipeline:
                                         break
 
                                 # Set environment variable with combined JSON
-                                os.environ['FLAG_NAME_JSON'] = json.dumps(all_flags)
-                                print("Environment variable FLAG_NAME_JSON set with combined JSON of all feature flags.")
+                                os.environ['FLAG_META_JSON'] = json.dumps(all_flags)
+                                print("Environment variable FLAG_META_JSON set with combined JSON of all feature flags.")
 
                             # Call the function
                             get_feature_flags()
@@ -77,13 +77,18 @@ pipeline:
                             SPLIT_API_KEY: <+input>
                             SPLIT_WORKSPACE_ID: <+input>
                           outputVariables:
-                            - name: FLAG_NAME_JSON
+                            - name: FLAG_META_JSON
+                              type: String
+                              value: FLAG_META_JSON
+                        enforce:
+                          policySets:
+                            - ValidateMetaFlagNames
                     - step:
                         type: Run
-                        name: ValidateFlagDefinitions
-                        identifier: ValidateFlagDefinitions
+                        name: GetFlagDefinitions
+                        identifier: GetFlagDefinitions
                         spec:
-                          connectorRef: account.harnessImage
+                          connectorRef: account.james_dockerhub
                           image: python:latest
                           shell: Python
                           command: |-
@@ -143,12 +148,58 @@ pipeline:
                             SPLIT_API_KEY: <+input>
                           outputVariables:
                             - name: PROD_FLAG_DEFINITION_JSON
+                              type: String
+                              value: PROD_FLAG_DEFINITION_JSON
                             - name: STAGE_FLAG_DEFINITION_JSON
+                              type: String
+                              value: STAGE_FLAG_DEFINITION_JSON
                   stepGroupInfra:
                     type: KubernetesDirect
                     spec:
-                      connectorRef: harnessk8sconnector
+                      connectorRef: account.sesandboxdelegate
                       automountServiceAccountToken: false
+              - parallel:
+                  - step:
+                      type: Policy
+                      name: MetaFlagPolicies
+                      identifier: MetaFlagPolicies
+                      spec:
+                        policySets:
+                          - ValidateMetaFlagNames
+                        type: Custom
+                        policySpec:
+                          payload: <+execution.steps.GetFlagData.steps.GetMetaFlags.output.outputVariables.FLAG_META_JSON>>
+                      timeout: 10m
+                      enforce:
+                        policySets:
+                          - ValidateMetaFlagNames
+                      failureStrategies:
+                        - onFailure:
+                            errors:
+                              - PolicyEvaluationFailure
+                            action:
+                              type: MarkAsFailure
+                  - step:
+                      type: Policy
+                      name: FlagDefinitionPolicies
+                      identifier: FlagDefinitionPolicies
+                      spec:
+                        policySets:
+                          - ValiateFlagDefinitions
+                        type: Custom
+                        policySpec:
+                          payload: |-
+                            {
+                              "prod": <+execution.steps.GetFlagData.steps.GetFlagDefinitions.output.outputVariables.PROD_FLAG_DEFINITION_JSON>,
+                              "stage": <+execution.steps.GetFlagData.steps.GetFlagDefinitions.output.outputVariables.STAGE_FLAG_DEFINITION_JSON>
+                            }
+                      timeout: 10m
             rollbackSteps: []
           serviceDependencies: []
         tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - PolicyEvaluationFailure
+              action:
+                type: MarkAsFailure
