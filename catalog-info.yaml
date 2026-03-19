@@ -13,3 +13,7 @@ spec:
     branch: main
     monoRepo: false
     url: https://github.com/kleinjoshuaa/harness-fme-opa/tree/main
+metadata:
+  name: joshthing
+  annotations:
+    backstage.io/techdocs-ref: url:https://github.com/kleinjoshuaa/harness-fme-opa/tree/main/docs
