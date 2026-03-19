@@ -1,0 +1,15 @@
+apiVersion: harness.io/v1
+kind: Component
+type: testdelete
+identifier: joshthing
+name: josh-thing
+owner: group:account/Account_Admins
+spec:
+  lifecycle: unknown
+  sourceCode:
+    provider: Github
+    repoName: harness-fme-opa
+    connectorRef: account.joshgh
+    branch: main
+    monoRepo: false
+    url: https://github.com/kleinjoshuaa/harness-fme-opa/tree/main
