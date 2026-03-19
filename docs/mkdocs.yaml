@@ -1,0 +1,5 @@
+site_name: IDP
+site_description: test
+
+plugins:
+  - techdocs-core
