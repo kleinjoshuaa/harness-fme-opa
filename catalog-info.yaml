@@ -18,4 +18,3 @@ metadata:
   annotations:
     backstage.io/techdocs-ref: url:https://github.com/kleinjoshuaa/harness-fme-opa/tree/main/docs
     harnessfme/mywork: https://app.harness.io/ng/account/AM8HCbDiTXGQNrTIhNl7qQ/module/fme/orgs/default/projects/default_project/org/4ec48f70-bbfd-11f0-88bf-02779340d5f4/ws/ca8ff370-bf17-11f0-9690-ee36d9ebb814/mywork
-    harnessfme/isMigrated: 'true'
